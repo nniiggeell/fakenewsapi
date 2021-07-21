@@ -9,61 +9,39 @@ from flask import Flask, jsonify, request
 import pickle
 import pandas as pd
 import string
+from flask_cors import CORS
 
 def punctuation_removal(text):
     all_list = [char for char in text if char not in string.punctuation]
     clean_str = ''.join(all_list)
     return clean_str
+
 # load model
 model = pickle.load(open('model.pkl','rb'))
 
 # app
 app = Flask(__name__)
+CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # routes
-@app.route('/api', methods=['POST'])
+@app.route('/api', methods=['GET'])
 def predict():
     # get data
-    data = request.get_json(force = True)
-    
+    data = request.args['Query']
     lines2 = []
     lines2.append(data)
     df = pd.DataFrame({'text' : lines2}).astype(str)
     df['text'] = df['text'].apply(lambda x: x.lower())
     input_df = df.apply(punctuation_removal)
     
-    # predictions
-    result = model.predict(input_df)
+    result = {}
     
-    # send back to browser
-    output = result[0]
+    # predictions
+    result['Query'] = model.predict(input_df)[0]
 
     # return data
-    return jsonify(output)
+    return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(port = 5000, debug = True)
-    
-    
-"""
-# routes
-@app.route('/', methods=['POST'])
-
-def predict():
-    # get data
-    data = request.get_json(force = True)
-
-    # convert data into dataframe
-    data.update((x, [y]) for x, y in data.items())
-    data_df = pd.DataFrame.from_dict(data)
-
-    # predictions
-    result = model.predict(data_df)
-
-    # send back to browser
-    output = {'results': int(result[0])}
-
-    # return data
-    return jsonify(results=output)
-
-"""
+    app.run(port = 5000, debug = True, use_reloader = False)
