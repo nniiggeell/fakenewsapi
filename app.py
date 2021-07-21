@@ -34,12 +34,12 @@ def predict():
     
     # predictions
     result = model.predict(input_df)
-
+    
     # send back to browser
-    output = {'results': result}
+    output = result[0]
 
     # return data
-    return jsonify(results = output)
+    return jsonify(output)
 
 if __name__ == '__main__':
     app.run(port = 5000, debug = True)
